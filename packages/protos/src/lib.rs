@@ -245,23 +245,23 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
         input,
         quote! {
             enum SessionRight {
-                #[returns(::cw_auth::QueryResTemplate)]
-                SessionQueries(Box<::cw_auth::SessionQueryMsg<Self>>),
+                #[returns(::cw_auths::QueryResTemplate)]
+                SessionQueries(Box<::cw_auths::SessionQueryMsg<Self>>),
             }
         }
         .into(),
         move |enum_name, _generics, impl_generics, ty_generics, where_clause| {
             let base_msg = &base_msg_ident;
             quote! {
-                impl #impl_generics ::cw_auth::SessionQueriesMatch for #enum_name #ty_generics #where_clause {
-                    fn match_queries(&self) -> Option<::cw_auth::SessionQueryMsg<Self>> {
+                impl #impl_generics ::cw_auths::SessionQueriesMatch for #enum_name #ty_generics #where_clause {
+                    fn match_queries(&self) -> Option<::cw_auths::SessionQueryMsg<Self>> {
                         match self {
                             Self::SessionQueries(msg) => Some((**msg).clone()),
                             _ => None,
                         }
                     }
                 }
-                impl #impl_generics ::cw_auth::QueryUsesActions for #enum_name #ty_generics #where_clause {
+                impl #impl_generics ::cw_auths::QueryUsesActions for #enum_name #ty_generics #where_clause {
                     type ActionMsg = #base_msg;
                 }
             }

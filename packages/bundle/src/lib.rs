@@ -27,7 +27,7 @@ pub use types::stores;
 pub use {
     session::{handle_session_actions, handle_session_queries},
     types::{
-        SessionInfo, Expiration, session_action, session_query,
+        Expiration, session_action, session_query,
         queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions, QueryResTemplate},
         actions::{
             ActionMsg,

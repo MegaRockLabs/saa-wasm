@@ -4,11 +4,10 @@ use saa_schema::strum::{IntoDiscriminant};
 use saa_schema::strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 
 use smart_account_auth::cosmwasm_std::Env;
-use smart_account_auth::Session;
+use smart_account_auth::{Session, SessionInfo};
 use smart_account_auth::{msgs::DerivableMsg};
 use smart_account_auth::msgs::{SignedDataMsg, Action, AllowedActions, ActionDerivation};
 use crate::{errors::SessionError};
-use super::SessionInfo;
 
 
 
