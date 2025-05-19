@@ -9,24 +9,24 @@ use crate::errors::StorageError;
 
 
 /// The credential ID to use by default for verifications
-pub const VERIFYING_ID : Item<CredentialId> = Item::new("saa_verifying_id");
+pub const VERIFYING_ID : Item<CredentialId> = Item::new("cw_auth_ver");
 
 
 // whether there are native callers to authorize easily
-pub const HAS_NATIVES : Item<bool> = Item::new("saa_has_natives");
+pub const HAS_NATIVES : Item<bool> = Item::new("cw_auth_hn");
 
 
 /// Mapping of credential IDs to credential additional information.
-pub const CREDENTIAL_INFOS: Map<CredentialId, CredentialInfo> = Map::new("saa_credentials");
+pub const CREDENTIAL_INFOS: Map<CredentialId, CredentialInfo> = Map::new("cw_auth_creds");
 
 
 /// Storage of used nonces  to prevent replay attacks. &str to boolean
-pub const ACCOUNT_NUMBER : Item<u64> = Item::new("saa_acc_num");
+pub const ACCOUNT_NUMBER : Item<u64> = Item::new("cw_auth_an");
 
 
 /// Storage of session keys
 #[cfg(feature = "session")]
-pub const SESSIONS: Map<String, smart_account_auth::Session> = Map::new("saa_sessions");
+pub const SESSIONS: Map<String, smart_account_auth::Session> = Map::new("cw_auth_ses");
 
 
 

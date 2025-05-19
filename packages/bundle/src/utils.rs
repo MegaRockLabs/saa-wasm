@@ -1,12 +1,6 @@
-
-
-
-
-
-use smart_account_auth::StorageError;
 use types::{
     cosmwasm_std::{from_json, Api, Binary, Env, Storage}, 
-    errors::{AuthError, ReplayError}, 
+    errors::{AuthError, ReplayError, StorageError}, 
     stores::{get_map_records, map_get, VERIFYING_ID, CREDENTIAL_INFOS as CREDS}, 
     Credential, CredentialRecord, MsgDataToSign, MsgDataToVerify, SignedDataMsg
 };
@@ -19,7 +13,6 @@ pub fn get_credential_records(
 ) -> Result<Vec<CredentialRecord>, StorageError> {
     get_map_records(storage, &CREDS, "credentials")
 }
-
 
 
 
