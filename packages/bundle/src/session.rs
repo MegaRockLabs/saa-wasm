@@ -1,19 +1,20 @@
-
-use smart_account_auth::{ensure, Caller, Session, traits::Verifiable};
-use smart_account_auth::msgs::{Action, AllQueryDerivation, DerivableMsg};
-use types::{actions::{SessionActionMsg}};
-use types::strum::{IntoDiscriminant, VariantArray, VariantNames};
-use types::stores::{map_get, map_remove, map_save, SESSIONS};
-use types::queries::{QueryUsesActions, SessionQueriesMatch, SessionQueryMsg};
-use types::errors::{AuthError, SessionError, StorageError};
-use types::cosmwasm_std::{to_json_binary, Api, Binary, Env, MessageInfo, StdError, Storage};
-use types::actions::{ActionMsg, SessionActionsMatch};
+use smart_account_auth::{
+    msgs::{Action, AllQueryDerivation, DerivableMsg, SignedDataMsg, MsgDataToSign},
+    Caller, Credential, CredentialName, Session, ensure,
+    traits::Verifiable, 
+};
+use types::{
+    sessions::{
+        queries::{QueryUsesActions, SessionQueriesMatch, SessionQueryMsg},
+        actions::{SessionActionMsg, SessionActionsMatch, ActionMsg},
+    },
+    wasm::{to_json_binary, Api, Binary, Env, MessageInfo, StdError, Storage},
+    errors::{AuthError, SessionError, StorageError},
+    stores::{map_get, map_save, map_remove, SESSIONS},
+    strum::{IntoDiscriminant, VariantArray, VariantNames},
+    serde
+};
 use crate::utils::{session_cred_from_signed};
-pub (crate) use types::*;
-
-
-
-
 
 
 
@@ -87,7 +88,7 @@ pub fn verify_session_signed<T : serde::de::DeserializeOwned + DerivableMsg>(
     api: &dyn Api,
     storage: &mut dyn Storage,
     env: &Env,
-    key: &str,
+    key: &String,
     session: &Session,
     msg: SignedDataMsg
 ) -> VerifyResult<T> {
@@ -176,7 +177,7 @@ pub fn handle_session_actions<M>(
             let msgs   = match with_msg.message {
 
                 ActionMsg::Signed(msg) => {
-                    verify_session_signed(api, storage, env, key.as_str(), &session, msg)?
+                    verify_session_signed(api, storage, env, key, &session, msg)?
                 }
                 ActionMsg::Native(execute) => {
                     verify_session_native(api,  addr.as_str(), &session, execute)?

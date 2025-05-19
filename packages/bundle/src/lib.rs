@@ -5,32 +5,34 @@ mod methods;
 mod session;
 
 
+pub use types::{StoredCredentials, UpdateOperation};
 
 #[cfg(feature = "session")]
 pub use {
+    types::{sessions::{queries::*, actions::*}, macros::{session_action, session_query}},
     session::{handle_session_actions, handle_session_queries},
-    types::queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions, QueryResTemplate},
-    types::actions::{SessionActionMsg, SessionActionsMatch}
-};
-#[cfg(feature = "utils")]
-pub use {
-    methods::*,
-    utils::*,
 };
 #[cfg(feature = "types")]
-pub use types;
+pub use {
+    types::stores, smart_account_auth as saa_types
+};
+
+#[cfg(feature = "utils")]
+pub use {methods::*, utils::*};
 
 
 
-
-
-use types::{
+use smart_account_auth::{
     traits::Verifiable,
+    msgs::SignedDataMsg,
+    CredentialData, CredentialRecord, CredentialInfo, CredentialName, CredentialId,
+    ensure
+};
+use types::{
+    stores::{ACCOUNT_NUMBER, HAS_NATIVES, VERIFYING_ID, CREDENTIAL_INFOS as CREDS},
+    wasm::{Api, Env, MessageInfo, Storage},
     errors::{AuthError, StorageError}, 
-    cosmwasm_std::{Api, Env, MessageInfo, Storage}, 
-    stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS as CREDS, HAS_NATIVES, VERIFYING_ID},
-    StoredCredentials, CredentialData, CredentialRecord, CredentialInfo, CredentialName, CredentialId,
-    ensure, SignedDataMsg, serde, stores, UpdateOperation,
+    serde
 };
 
 
@@ -94,9 +96,10 @@ pub fn get_stored_credentials(
     storage: &dyn Storage
 ) -> Result<StoredCredentials, StorageError> {
 
+
     Ok(StoredCredentials { 
         has_natives: has_natives(storage),
-        verifying_id: stores::VERIFYING_ID.load(storage).map_err(|_| StorageError::NotFound)?,
+        verifying_id: VERIFYING_ID.load(storage).map_err(|_| StorageError::NotFound)?,
         records: utils::get_credential_records(storage)?,
         account_number: account_number(storage), 
         #[cfg(feature = "session")]

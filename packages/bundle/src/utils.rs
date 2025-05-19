@@ -1,8 +1,11 @@
 use types::{
-    cosmwasm_std::{from_json, Api, Binary, Env, Storage}, 
+    wasm::{from_json, Api, Binary, Env, Storage}, 
     errors::{AuthError, ReplayError, StorageError}, 
-    stores::{get_map_records, map_get, VERIFYING_ID, CREDENTIAL_INFOS as CREDS}, 
-    Credential, CredentialRecord, MsgDataToSign, MsgDataToVerify, SignedDataMsg
+    stores::{get_map_records, map_get, VERIFYING_ID, CREDENTIAL_INFOS as CREDS},
+};
+use smart_account_auth::{
+    msgs::{MsgDataToSign, MsgDataToVerify, SignedDataMsg},
+    Credential, CredentialRecord, CredentialInfo
 };
 
 
@@ -66,7 +69,7 @@ pub fn session_cred_from_signed(
     msg: SignedDataMsg,
 ) -> Result<Credential, AuthError> {
     let (id, hrp, ext) = parse_cred_args( key, &msg);
-    let session = map_get(storage, &super::stores::SESSIONS, &id, "session key")
+    let session = map_get(storage, &types::stores::SESSIONS, &id, "session key")
         .map_err(|e| AuthError::generic(e.to_string()))?;
 
     let mut info = session.grantee.1.clone();
@@ -78,7 +81,7 @@ pub fn session_cred_from_signed(
 
 
 fn construct_credential(
-    _info: (String, types::CredentialInfo), 
+    _info: (String, CredentialInfo), 
     _msg: SignedDataMsg, 
     _ext: Option<Binary>
 ) -> Result<Credential, AuthError> {

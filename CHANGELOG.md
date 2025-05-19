@@ -5,6 +5,12 @@ Project **TRIES** adhering to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), however going through the active development stage and can't guarantee it (FOR NOW).
 
 
+## [0.3.0] - 2025-05-19
+
+## Changed
+- Stop exporting types individually and expose the whole `smart_account_auth` crate instead (under `types` feature flag)
+
+
 ## [0.2.1] - 2025-05-19
 
 ## Changed

@@ -2,9 +2,9 @@
 pub use cw_storage_plus_one as cw_storage_plus;
 
 use cw_storage_plus::{Item, Map};
-use crate::cosmwasm_std::{StdError, Storage, Order};
+use smart_account_auth::{CredentialInfo, CredentialId};
+use crate::wasm::{StdError, Storage, Order};
 use crate::serde::{de::DeserializeOwned, Serialize};
-use crate::{CredentialInfo, CredentialId};
 use crate::errors::StorageError;
 
 
@@ -70,13 +70,13 @@ pub fn map_get<T>(
 pub fn map_save<T>(
     storage: &mut dyn Storage,
     map: &Map<String, T>,
-    key: impl ToString,
+    key: &String,
     value: &T,
     name: &str
 ) -> Result<(), StorageError> 
     where T: Serialize + DeserializeOwned
 {
-    map.save(storage, key.to_string(), value)
+    map.save(storage, key.clone(), value)
     .map_err(|e| StorageError::Write(name.to_string(), e.to_string()))
 }
 

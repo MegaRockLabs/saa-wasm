@@ -1,16 +1,12 @@
-use types::{cosmwasm_std::{Order, StdError, Storage}, errors::StorageError, 
-    stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}, CredentialId
-    
+use types::{
+    stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}, 
+    wasm::{Order, StdError, Storage}, 
+    errors::StorageError, 
 };
 
+use smart_account_auth::{CredentialId};
 
 
-#[cfg(feature = "session")]
-pub fn get_session_records(
-    storage: &dyn Storage,
-) -> Result<Vec<(String, smart_account_auth::Session)>, crate::StorageError> {
-    crate::stores::get_map_records(storage, &crate::stores::SESSIONS, "session keys")
-}
 
 
 
@@ -38,13 +34,6 @@ pub fn increment_account_number(
 
 
 
-
-pub fn credential_count(storage: &dyn Storage) -> usize {
-    CREDENTIAL_INFOS.keys_raw(storage, None, None, Order::Ascending).count()
-}
-
-
-
 pub fn has_credential(
     storage: &dyn Storage,
     id: CredentialId
@@ -53,3 +42,16 @@ pub fn has_credential(
 }
 
 
+
+pub fn credential_count(storage: &dyn Storage) -> usize {
+    CREDENTIAL_INFOS.keys_raw(storage, None, None, Order::Ascending).count()
+}
+
+
+
+#[cfg(feature = "session")]
+pub fn get_session_records(
+    storage: &dyn Storage,
+) -> Result<Vec<(String, smart_account_auth::Session)>, StorageError> {
+    types::stores::get_map_records(storage, &types::stores::SESSIONS, "session keys")
+}

@@ -1,5 +1,5 @@
 [package]
-name        = "saa-tests"
+name        = "cw-auth-tests"
 description = "Tests"
 edition     = { workspace = true }
 authors     = { workspace = true }
@@ -9,4 +9,4 @@ repository  = { workspace = true }
 
 
 [dependencies]
-cw-auth             = { workspace = true }
+cw-auths          = { workspace = true, features = ["types"] }

@@ -1,20 +1,27 @@
+#[cfg(feature = "session")]
+pub mod sessions;
 pub mod errors;
 pub mod stores;
 
-pub use smart_account_auth::{Expiration, CredentialData, cosmwasm_std, traits, ensure};
-pub use smart_account_auth::{Credential, CredentialId, CredentialName, CredentialInfo, CredentialRecord};
-pub use smart_account_auth::msgs::{MsgDataToSign, MsgDataToVerify, SignedDataMsg, AuthPayload};
-pub use saa_schema::{saa_type, saa_error, serde, thiserror, schemars, strum, strum_macros};
+pub use smart_account_auth::cosmwasm_std as wasm;
+pub use saa_schema::{saa_type, serde, strum, strum_macros};
 
 
 #[cfg(feature = "session")]
-mod sessions;
-#[cfg(feature = "session")]
-pub use {
-    protos::{session_action, session_query},
-    smart_account_auth::{Session, SessionInfo},
-    sessions::*
-};
+pub mod macros {
+    pub use protos::{session_action, session_query};
+}
+
+
+use smart_account_auth::{CredentialId, CredentialRecord, CredentialData};
+
+
+#[saa_type]
+pub enum UpdateOperation<D : serde::Serialize = CredentialData> {
+    Add(D),
+    Remove(Vec<crate::CredentialId>),
+}
+
 
 
 
@@ -33,16 +40,7 @@ pub struct StoredCredentials {
     pub account_number  :   u64,
 
     // Session keys that can be used used for specific actions
-    //#[serde(skip_serializing_if = "Option::is_none")]
     #[cfg(feature = "session")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sessions        :   Option<CredentialId>,
 }
-
-
-
-#[saa_type]
-pub enum UpdateOperation<D : serde::Serialize = CredentialData> {
-    Add(D),
-    Remove(Vec<crate::CredentialId>),
-}
-
