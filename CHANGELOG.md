@@ -5,9 +5,15 @@ Project **TRIES** adhering to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), however going through the active development stage and can't guarantee it (FOR NOW).
 
 
+## [0.2.1] - 2025-05-19
+
+## Changed
+- Session action and queries msgs & traits to top level export
+
+
 ## [0.2.0] - 2025-05-19
 
-## Added
+## Changed
 - Re-exposing additional credential types from `smart-account-auth`
 
 

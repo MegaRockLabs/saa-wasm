@@ -8,8 +8,9 @@ mod session;
 
 #[cfg(feature = "session")]
 pub use {
-    smart_account_auth::{Session, SessionInfo},
     session::{handle_session_actions, handle_session_queries},
+    types::queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions, QueryResTemplate},
+    types::actions::{SessionActionMsg, SessionActionsMatch}
 };
 #[cfg(feature = "utils")]
 pub use {
@@ -18,7 +19,6 @@ pub use {
 };
 #[cfg(feature = "types")]
 pub use types;
-
 
 
 

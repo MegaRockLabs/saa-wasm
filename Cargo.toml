@@ -7,7 +7,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.2.0"
+version         = "0.2.1"
 edition         = "2021"
 readme          = "README.md"
 repository      = "https://github.com/MegaRockLabs/cw-auths"
@@ -21,9 +21,9 @@ smart-account-auth      = { version = "0.25.0", features = ["types", "traits"] }
 saa-schema              = { version = "0.25.1", features = ["cosmwasm"] }
 
 
-cw-auths                = { path = "packages/bundle", package = "cw-auths", version = "0.2.0" }
-types                   = { path = "packages/types",  package = "cw-auth-types", version = "0.2.0" }
-protos                  = { path = "packages/protos", package = "cw-auth-protos", version = "0.2.0" }
+cw-auths                = { path = "packages/bundle", package = "cw-auths", version = "0.2.1" }
+types                   = { path = "packages/types",  package = "cw-auth-types", version = "0.2.1" }
+protos                  = { path = "packages/protos", package = "cw-auth-protos", version = "0.2.1" }
 
 
 

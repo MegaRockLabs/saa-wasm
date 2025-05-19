@@ -637,7 +637,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auth-protos"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -646,7 +646,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auth-types"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "cosmwasm-schema 2.2.2",
  "cw-auth-protos",
@@ -660,7 +660,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auths"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "cw-auth-types",
  "saa-schema",

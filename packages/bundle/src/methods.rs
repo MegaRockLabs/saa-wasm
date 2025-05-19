@@ -5,7 +5,6 @@ use types::{cosmwasm_std::{Order, StdError, Storage}, errors::StorageError,
 
 
 
-
 #[cfg(feature = "session")]
 pub fn get_session_records(
     storage: &dyn Storage,
