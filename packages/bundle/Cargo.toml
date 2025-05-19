@@ -1,5 +1,5 @@
 [package]
-name        = "cw-auth"
+name        = "cw-auths"
 description = "Authentication library for smart accounts of CosmWasm"
 edition     = { workspace = true }
 authors     = { workspace = true }
@@ -10,7 +10,7 @@ repository  = { workspace = true }
 
 
 [lib]
-name        =  "cw_auth"
+name        =  "cw_auths"
 path        =  "src/lib.rs"
 crate-type  =  ["cdylib", "rlib"]
 

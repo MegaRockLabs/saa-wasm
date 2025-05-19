@@ -1,4 +1,4 @@
-# cw-auth
+# cw-auths
 
 
 ### Storage / Replay

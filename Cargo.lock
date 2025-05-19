@@ -636,15 +636,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-auth"
-version = "0.1.0"
-dependencies = [
- "cw-auth-types",
- "saa-schema",
- "smart-account-auth",
-]
-
-[[package]]
 name = "cw-auth-protos"
 version = "0.1.0"
 dependencies = [
@@ -665,6 +656,15 @@ dependencies = [
  "smart-account-auth",
  "strum",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "cw-auths"
+version = "0.1.0"
+dependencies = [
+ "cw-auth-types",
+ "saa-schema",
+ "smart-account-auth",
 ]
 
 [[package]]
