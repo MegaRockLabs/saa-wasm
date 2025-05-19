@@ -5,6 +5,12 @@ Project **TRIES** adhering to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), however going through the active development stage and can't guarantee it (FOR NOW).
 
 
+## [0.3.1] - 2025-05-19
+
+## Changed
+- `utils` feature flag is now passed down to `smart-account-auth` crate
+
+
 ## [0.3.0] - 2025-05-19
 
 ## Changed

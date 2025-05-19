@@ -26,6 +26,6 @@ cw_1      =   ["types/cw_1"]
 cw_2      =   ["types/cw_2"]
 session   =   ["types/session"]
 
+utils     =   ["smart-account-auth/utils"]
 multimsg  =   [ ]
-utils     =   [ ]
 types     =   [ ]

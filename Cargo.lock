@@ -637,7 +637,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auth-protos"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -646,14 +646,14 @@ dependencies = [
 
 [[package]]
 name = "cw-auth-tests"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cw-auths",
 ]
 
 [[package]]
 name = "cw-auth-types"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cosmwasm-schema 2.2.2",
  "cw-auth-protos",
@@ -667,7 +667,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auths"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cw-auth-types",
  "saa-schema",
@@ -2240,6 +2240,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "serde_json",
  "strum",
  "strum_macros",
 ]
