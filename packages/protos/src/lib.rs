@@ -173,14 +173,14 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         input,
         quote! {
             enum SessionRight {
-                SessionActions(Box<::cw_auth::SessionActionMsg<Self>>),
+                SessionActions(Box<::cw_auths::SessionActionMsg<Self>>),
             }
         }
         .into(),
         |enum_name, _generics, impl_generics, ty_generics, where_clause| {
             quote! {
-                impl #impl_generics ::cw_auth::SessionActionsMatch for #enum_name #ty_generics #where_clause {
-                    fn match_actions(&self) -> Option<::cw_auth::SessionActionMsg<Self>> {
+                impl #impl_generics ::cw_auths::SessionActionsMatch for #enum_name #ty_generics #where_clause {
+                    fn match_actions(&self) -> Option<::cw_auths::SessionActionMsg<Self>> {
                         match self {
                             Self::SessionActions(msg) => Some((**msg).clone()),
                             _ => None,
