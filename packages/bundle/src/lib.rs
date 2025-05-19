@@ -3,47 +3,35 @@ mod utils;
 mod methods;
 #[cfg(feature = "session")]
 mod session;
+
+
+
+#[cfg(feature = "session")]
+pub use {
+    smart_account_auth::{Session, SessionInfo},
+    session::{handle_session_actions, handle_session_queries},
+};
 #[cfg(feature = "utils")]
 pub use {
     methods::*,
     utils::*,
 };
-pub (crate) use types::*;
-use smart_account_auth::{ensure, traits::Verifiable};
-use types::{
-    cosmwasm_std::{Api, Env, MessageInfo, Storage}, 
-    errors::{AuthError, StorageError}, 
-    stores::{
-        ACCOUNT_NUMBER, CREDENTIAL_INFOS as CREDS, 
-        HAS_NATIVES, VERIFYING_ID
-    }
-};
-
 #[cfg(feature = "types")]
-pub use types::stores;
+pub use types;
 
 
-#[cfg(feature = "session")]
-pub use {
-    session::{handle_session_actions, handle_session_queries},
-    types::{
-        Expiration, session_action, session_query,
-        queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions, QueryResTemplate},
-        actions::{
-            ActionMsg,
-            SessionActionMsg, SessionActionsMatch, CreateSession, 
-            CreateSessionFromMsg, WithSessionMsg, RevokeKeyMsg
-        }, 
-    }
+
+
+
+
+use types::{
+    traits::Verifiable,
+    errors::{AuthError, StorageError}, 
+    cosmwasm_std::{Api, Env, MessageInfo, Storage}, 
+    stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS as CREDS, HAS_NATIVES, VERIFYING_ID},
+    StoredCredentials, CredentialData, CredentialRecord, CredentialInfo, CredentialName, CredentialId,
+    ensure, SignedDataMsg, serde, stores, UpdateOperation,
 };
-
-
-pub use types::errors;
-pub use types::{MsgDataToSign, MsgDataToVerify, SignedDataMsg, AuthPayload};
-pub use types::{UpdateOperation, StoredCredentials, Credential};
-pub use smart_account_auth::{CredentialData};
-
-
 
 
 pub fn account_number(

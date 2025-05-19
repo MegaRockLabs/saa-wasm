@@ -1,8 +1,7 @@
 pub mod errors;
 pub mod stores;
 
-use smart_account_auth::CredentialData;
-pub use smart_account_auth::{Expiration, cosmwasm_std};
+pub use smart_account_auth::{Expiration, CredentialData, cosmwasm_std, traits, ensure};
 pub use smart_account_auth::{Credential, CredentialId, CredentialName, CredentialInfo, CredentialRecord};
 pub use smart_account_auth::msgs::{MsgDataToSign, MsgDataToVerify, SignedDataMsg, AuthPayload};
 pub use saa_schema::{saa_type, saa_error, serde, thiserror, schemars, strum, strum_macros};
@@ -13,11 +12,9 @@ mod sessions;
 #[cfg(feature = "session")]
 pub use {
     protos::{session_action, session_query},
+    smart_account_auth::{Session, SessionInfo},
     sessions::*
 };
-
-
-
 
 
 

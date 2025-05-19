@@ -4,7 +4,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 Project **TRIES** adhering to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), however going through the active development stage and can't guarantee it (FOR NOW).
 
-<!-- next-header -->
+
+## [0.2.0] - 2025-05-19
+
+## Added
+- Re-exposing additional credential types from `smart-account-auth`
+
+
+## [0.1.2] - 2025-05-19
+
+## Changed
+- Reusing `SessionInfo` from `smart-account-auth` insteading of defining a new local
+
 
 ## [0.1.1] - 2025-05-19
 
