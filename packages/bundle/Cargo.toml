@@ -1,0 +1,31 @@
+[package]
+name        = "cw-auth"
+description = "Authentication library for smart accounts of CosmWasm"
+edition     = { workspace = true }
+authors     = { workspace = true }
+version     = { workspace = true }
+license     = { workspace = true }
+readme      = { workspace = true }
+repository  = { workspace = true }
+
+
+[lib]
+name        =  "cw_auth"
+path        =  "src/lib.rs"
+crate-type  =  ["cdylib", "rlib"]
+
+
+[dependencies]
+smart-account-auth      = { workspace = true }
+saa-schema              = { workspace = true }
+types                   = { workspace = true }
+
+[features]
+default   =   ["cw_1", "session"]
+cw_1      =   ["types/cw_1"]
+cw_2      =   ["types/cw_2"]
+session   =   ["types/session"]
+
+multimsg  =   [ ]
+utils     =   [ ]
+types     =   [ ]

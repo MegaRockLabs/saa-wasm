@@ -1,0 +1,31 @@
+[package]
+name        = "cw-auth-types"
+description = "Authentication library for smart accounts of CosmWasm"
+edition     = { workspace = true }
+authors     = { workspace = true }
+version     = { workspace = true }
+license     = { workspace = true }
+readme      = { workspace = true }
+repository  = { workspace = true }
+
+
+
+[dependencies]
+smart-account-auth      = { workspace = true }
+saa-schema              = { workspace = true }
+protos                  = { workspace = true, optional = true }
+
+strum                   = { version = "0.27.1" }
+cosmwasm-schema         = { version = "2.2.2", default-features = false }
+
+# Storage
+cw-storage-plus         = { version = "2.0.0", optional = true }
+cw-storage-plus-one     = { version = "1.2.0", optional = true, package = "cw-storage-plus" }
+thiserror               = { version = "2.0.12", default-features = false }
+
+
+
+[features]
+session   =   ["smart-account-auth/session", "dep:protos"]
+cw_2      =   ["dep:cw-storage-plus", "smart-account-auth/cosmwasm"]
+cw_1      =   ["dep:cw-storage-plus-one", "smart-account-auth/cosmwasm_1"]
