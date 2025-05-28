@@ -165,35 +165,67 @@ where
 
 
 
-
 #[proc_macro_attribute]
 pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    generate_session_macro(
-        metadata,
-        input,
-        quote! {
-            enum SessionRight {
-                SessionActions(Box<::cw_auths::SessionActionMsg<Self>>),
-            }
+    // Parse the macro argument
+    let args = parse_macro_input!(metadata as AttributeArgs);
+    let non_session_ty = match args.first() {
+        Some(NestedMeta::Meta(Meta::Path(path))) => path.clone(),
+        _ => {
+            return syn::Error::new_spanned(
+                quote! { #[session_action(..)] },
+                "expected #[session_action(ExecuteAccountMsg)] with exactly one type argument",
+            )
+            .to_compile_error()
+            .into();
         }
-        .into(),
-        |enum_name, _generics, impl_generics, ty_generics, where_clause| {
-            quote! {
-                impl #impl_generics ::cw_auths::SessionActionsMatch for #enum_name #ty_generics #where_clause {
-                    fn match_actions(&self) -> Option<::cw_auths::SessionActionMsg<Self>> {
-                        match self {
-                            Self::SessionActions(msg) => Some((**msg).clone()),
-                            _ => None,
-                        }
-                    }
+    };
+
+    // Parse the enum itself
+    let mut input_enum = parse_macro_input!(input as syn::ItemEnum);
+    let enum_ident = &input_enum.ident;
+    let (impl_generics, ty_generics, where_clause) = input_enum.generics.split_for_impl();
+
+    // Add `SessionActions` variant to the enum
+    input_enum.variants.push(syn::Variant {
+        ident: syn::Ident::new("SessionActions", enum_ident.span()),
+        fields: syn::Fields::Unnamed(syn::FieldsUnnamed {
+            paren_token: Default::default(),
+            unnamed: std::iter::once(syn::Field {
+                attrs: vec![],
+                vis: syn::Visibility::Inherited,
+                ident: None,
+                colon_token: None,
+                ty: syn::parse_quote!(::saa_wasm::SessionActionMsg<#non_session_ty>),
+            })
+            .collect(),
+        }),
+        discriminant: None,
+        attrs: vec![],
+    });
+
+    // Generate the trait impl
+    let trait_impl = quote! {
+        impl #impl_generics ::saa_wasm::SessionActionsMatch<#non_session_ty>
+            for #enum_ident #ty_generics #where_clause
+        {
+            fn match_actions(&self) -> Option<::saa_wasm::SessionActionMsg<#non_session_ty>> {
+                match self {
+                    Self::SessionActions(msg) => Some((**msg).clone()),
+                    _ => None,
                 }
             }
-        },
-        None,
-    )
+        }
+    };
+
+    // Combine the updated enum and impl
+    let output = quote! {
+        #input_enum
+        #trait_impl
+    };
+
+    output.into()
 }
-
-
 
 
 
@@ -245,23 +277,23 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
         input,
         quote! {
             enum SessionRight {
-                #[returns(::cw_auths::QueryResTemplate)]
-                SessionQueries(Box<::cw_auths::SessionQueryMsg<Self>>),
+                #[returns(::saa_wasm::QueryResTemplate)]
+                SessionQueries(Box<::saa_wasm::SessionQueryMsg<Self>>),
             }
         }
         .into(),
         move |enum_name, _generics, impl_generics, ty_generics, where_clause| {
             let base_msg = &base_msg_ident;
             quote! {
-                impl #impl_generics ::cw_auths::SessionQueriesMatch for #enum_name #ty_generics #where_clause {
-                    fn match_queries(&self) -> Option<::cw_auths::SessionQueryMsg<Self>> {
+                impl #impl_generics ::saa_wasm::SessionQueriesMatch for #enum_name #ty_generics #where_clause {
+                    fn match_queries(&self) -> Option<::saa_wasm::SessionQueryMsg<Self>> {
                         match self {
                             Self::SessionQueries(msg) => Some((**msg).clone()),
                             _ => None,
                         }
                     }
                 }
-                impl #impl_generics ::cw_auths::QueryUsesActions for #enum_name #ty_generics #where_clause {
+                impl #impl_generics ::saa_wasm::QueryUsesActions for #enum_name #ty_generics #where_clause {
                     type ActionMsg = #base_msg;
                 }
             }

@@ -126,20 +126,22 @@ pub fn update_session(
 
 
 
-pub fn handle_session_actions<M>(
+pub fn handle_session_actions<M, N>(
     api : &dyn Api,
     storage: &mut dyn Storage,
     env: &Env,
     info: &MessageInfo,
     msg: M,
     admin: Option<String>,
-) -> Result<(Option<Session>, ReturnMsg<M>), AuthError> 
-    where M : serde::de::DeserializeOwned + SessionActionsMatch,
+) -> Result<(Option<Session>, ReturnMsg<N>), AuthError> 
+    where 
+        N : serde::de::DeserializeOwned + DerivableMsg, 
+        M : SessionActionsMatch<N>,
 {
 
     let session_msg = match msg.match_actions() {
         Some(msg) => msg,
-        None => return Ok((None, wrap_one_rmsg(msg))),
+        None => return Ok((None, wrap_one_rmsg(msg.into()))),
     };
 
     let addr = admin.unwrap_or(info.sender.to_string());

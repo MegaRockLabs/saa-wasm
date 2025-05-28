@@ -9,4 +9,4 @@ repository  = { workspace = true }
 
 
 [dependencies]
-cw-auths          = { workspace = true, features = ["types"] }
+saa-wasm    = { workspace = true, features = ["types"] }

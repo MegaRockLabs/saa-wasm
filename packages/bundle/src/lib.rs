@@ -120,7 +120,6 @@ pub fn save_credentials(
     let data = data.with_native(info);
     data.validate()?;
     data.checked_replay( env, 0u64)?;
-
     ACCOUNT_NUMBER.save(storage, &1u64)?;
 
     let mut has_natives = false;
@@ -208,12 +207,13 @@ pub fn reset_credentials(
 pub fn update_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
+    env: &Env,
     op: UpdateOperation,
 ) -> Result<(), AuthError> {
     let had_natives = HAS_NATIVES.load(storage)?;
     match op {
         UpdateOperation::Add(data) => {
-            add_credentials(api, storage, data, had_natives)
+            add_credentials(api, storage, env, data, had_natives)
         },
         UpdateOperation::Remove(idx) => {
             remove_credentials(storage, idx, had_natives)?;
@@ -229,12 +229,17 @@ pub fn update_credentials(
 pub fn add_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
+    env: &Env,
     data: CredentialData,
     had_natives: bool
 ) -> Result<(), AuthError> {
-    
     data.validate()?;
+
+    let nonce = account_number(storage);
+    data.checked_replay(env, nonce)?;
     data.verify_cosmwasm(api)?;
+
+    ACCOUNT_NUMBER.save(storage, &(nonce +1) )?;
 
     if let Some(ix) = data.primary_index {
         VERIFYING_ID.save(storage, &data.credentials[ix as usize].id())?;

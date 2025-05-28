@@ -1,5 +1,5 @@
 [package]
-name        = "cw-auth-protos"
+name        = "saa-wasm-protos"
 description = "Procedural macros of of cw-auth"
 edition     = { workspace = true }
 authors     = { workspace = true }

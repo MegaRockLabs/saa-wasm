@@ -20,3 +20,5 @@ target/
 
 # code coverage
 tarpaulin-report.*
+
+TEMP*
