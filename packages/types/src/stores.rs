@@ -1,4 +1,4 @@
-#[cfg(all(feature = "cw_1", not(feature = "cw_2")))]
+#[cfg(all(feature = "cosmwasm_v1", not(feature = "cosmwasm")))]
 pub use cw_storage_plus_one as cw_storage_plus;
 
 use cw_storage_plus::{Item, Map};
@@ -9,7 +9,7 @@ use crate::errors::StorageError;
 
 
 /// The credential ID to use by default for verifications
-pub const VERIFYING_ID : Item<CredentialId> = Item::new("cw_auth_ver");
+pub const PRIMARY_ID : Item<CredentialId> = Item::new("cw_auth_ver");
 
 
 // whether there are native callers to authorize easily

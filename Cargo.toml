@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.1.0"
+version         = "0.1.0-alpha.1"
 edition         = "2021"
 readme          = "README.md"
 repository      = "https://github.com/MegaRockLabs/cw-auths"
@@ -18,13 +18,12 @@ license         = "MIT"
 
 
 [workspace.dependencies]
-smart-account-auth      = { version = "0.25.0", features = ["types", "traits"] }
-saa-schema              = { version = "0.25.1", features = ["cosmwasm"]  }
+smart-account-auth      = { version = "0.26.0-rc2", features = ["types"], path = "../contract-auth/packages/bundle" }
+saa-schema              = { version = "0.26.0", features = ["cosmwasm"] , path = "../contract-auth/packages/schema" }
 
-
-saa-wasm                = { path = "packages/bundle", version = "0.1.0" }
-types                   = { path = "packages/types",  package = "saa-wasm-types", version = "0.1.0" }
-protos                  = { path = "packages/protos", package = "saa-wasm-protos", version = "0.1.0" }
+saa-wasm                = { path = "packages/bundle", default-features = true, version = "0.1.0-alpha.1" }
+types                   = { path = "packages/types",  default-features = true, package = "saa-wasm-types", version = "0.1.0-alpha.1" }
+protos                  = { path = "packages/protos", default-features = true, package = "saa-wasm-protos", version = "0.1.0-alpha.1" }
 
 
 [profile.release.package.saa-wasm]

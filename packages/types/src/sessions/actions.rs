@@ -1,18 +1,15 @@
 
 use saa_schema::saa_type;
+use saa_schema::strum_macros::Display;
 use smart_account_auth::cosmwasm_std::Env;
-use smart_account_auth::{Session, SessionInfo};
-use smart_account_auth::{msgs::DerivableMsg};
+use smart_account_auth::{Session, SessionInfo, DerivableMsg};
 use smart_account_auth::msgs::{SignedDataMsg, Action, AllowedActions, ActionDerivation};
 use crate::{errors::SessionError};
 
-
-
-#[saa_type]
-pub enum ActionMsg<M> {
-    Native(M),
-    Signed(SignedDataMsg)
-}
+#[cfg(not(feature = "multi"))]
+pub type MsgArg<D> = D;
+#[cfg(feature = "multi")]
+pub type MsgArg<D> = Vec<D>;
 
 
 
@@ -25,8 +22,8 @@ pub struct CreateSession {
 
 
 #[saa_type]
-pub struct CreateSessionFromMsg<M : DerivableMsg> {
-    pub message             :      M,
+pub struct CreateSessionFrom<M : DerivableMsg> {
+    pub msgs                :      M,
     pub derivation          :      Option<ActionDerivation>,
     pub session_info        :      SessionInfo,
 }
@@ -36,7 +33,7 @@ pub struct CreateSessionFromMsg<M : DerivableMsg> {
 
 #[saa_type]
 pub struct WithSessionMsg<M> {
-    pub message             :      ActionMsg<M>,
+    pub msgs                :      MsgArg<M>,
     pub session_key         :      String,
 }
 
@@ -50,18 +47,19 @@ pub struct RevokeKeyMsg {
 
 
 #[saa_type]
+#[derive(Display)]
 pub enum SessionActionMsg<M : DerivableMsg> {
     CreateSession(CreateSession),
-    CreateSessionFromMsg(CreateSessionFromMsg<M>),
+    CreateSessionFromMsg(CreateSessionFrom<M>),
     WithSessionKey(WithSessionMsg<M>),
     RevokeSession(RevokeKeyMsg),
 }
 
 
-
-
-pub trait SessionActionsMatch<M : DerivableMsg> : Into<M>  {
-    fn match_actions(&self) -> Option<SessionActionMsg<M>>;
+#[saa_type]
+pub struct  SessionAction<M : DerivableMsg> {
+    pub msg          :      SessionActionMsg<M>,
+    pub signed       :      Option<SignedDataMsg>,
 }
 
 
@@ -92,7 +90,7 @@ impl CreateSession {
 
 
 
-impl<M: DerivableMsg> CreateSessionFromMsg<M> {
+impl<M: DerivableMsg> CreateSessionFrom<M> {
 
     pub fn to_session(
         &self, 
@@ -106,7 +104,7 @@ impl<M: DerivableMsg> CreateSessionFromMsg<M> {
         ) = self.session_info.checked_params(env, None)?;
         
         let method = self.derivation.clone().unwrap_or_default();
-        let action = Action::new(&self.message, method)
+        let action = Action::new(&self.msgs, method)
             .map_err(|_| SessionError::InvalidActions)?;
 
         Ok(Session {

@@ -1,39 +1,36 @@
-mod utils;
-#[cfg(feature = "utils")]
-mod methods;
 #[cfg(feature = "session")]
 mod session;
+mod utils;
 
-
-pub use types::{StoredCredentials, UpdateOperation};
-
-#[cfg(feature = "session")]
-pub use {
-    types::{sessions::{queries::*, actions::*}, macros::{session_action, session_query}},
-    session::{handle_session_actions, handle_session_queries},
-};
 #[cfg(feature = "types")]
-pub use {
-    types::stores, smart_account_auth as saa_types
-};
-
+pub use {types::stores, smart_account_auth as saa_types};
 #[cfg(feature = "utils")]
-pub use {methods::*, utils::*};
+pub use utils::*;
 
 
+
+pub use {
+    types::{
+        macros::{session_action, session_query},
+        sessions::{queries::*, actions::*}, 
+        StoredCredentials, UpdateOperation,
+    },
+    session::{handle_session_query, handle_session_action},
+};
 
 use smart_account_auth::{
-    traits::Verifiable,
-    msgs::SignedDataMsg,
-    CredentialData, CredentialRecord, CredentialInfo, CredentialName, CredentialId,
-    ensure
+    msgs::SignedDataMsg, CheckOption, CredentialId, CredentialName, CredentialRecord, ReplayParams, ReplayProtection, VerifiedData
 };
 use types::{
-    stores::{ACCOUNT_NUMBER, HAS_NATIVES, VERIFYING_ID, CREDENTIAL_INFOS as CREDS},
-    wasm::{Api, Env, MessageInfo, Storage},
-    errors::{AuthError, StorageError}, 
-    serde
+    stores::{ACCOUNT_NUMBER, HAS_NATIVES, PRIMARY_ID, CREDENTIAL_INFOS as CREDS}, 
+    errors::{AuthError, CredentialError, ReplayError, StorageError}, 
+    wasm::{ensure, Deps, DepsMut, Env, Storage}, 
+    serde::Serialize, 
 };
+
+use std::fmt::Display;
+
+
 
 
 pub fn account_number(
@@ -54,93 +51,82 @@ pub fn verify_native(
 }
 
 
-pub fn verify_signed(
-    api: &dyn Api,
-    storage: &dyn Storage,
-    env: &Env,
+pub fn verify_data(
+    deps: Deps,
     msg: SignedDataMsg
 ) -> Result<(), AuthError> {
-    utils::convert_validate(msg.data.as_slice(), env, account_number(storage))?;
-    utils::cred_from_signed(api, storage, msg)?;
+    utils::cred_from_signed(deps, msg)?;
     Ok(())
 } 
 
 
 
-pub fn verify_signed_actions<T : serde::de::DeserializeOwned>(
-    api: &dyn Api,
-    storage: &mut dyn Storage,
+
+pub fn verify_signed<T : Serialize + Display + Clone>(
+    deps: Deps,
     env: &Env,
-    msg: SignedDataMsg
-) -> Result<Vec<T>, AuthError> {
-    let nonce = account_number(storage);
-    let signed = utils::convert_validate_return(msg.data.as_slice(), env, nonce)?;
-    utils::cred_from_signed(api, storage, msg)?;
-    ACCOUNT_NUMBER.save(storage, &(nonce + 1))?;
-    Ok(signed.messages)
+    messages: Vec<T>,
+    signed: SignedDataMsg
+) -> Result<(), AuthError> {
+    let msgs = messages.iter()
+        .map(|m| m.to_string())
+        .collect::<Vec<String>>();
+    let nonce = account_number(deps.storage);
+    let cred = utils::cred_from_signed(deps, signed)?;
+    cred.protect_reply(env, ReplayParams::new(nonce, CheckOption::Messages(msgs)))?;
+    Ok(())
 }
 
 
 
-
-
-pub fn has_natives(
-    storage: &dyn Storage
-) -> bool {
-    HAS_NATIVES.load(storage).unwrap_or(false)
+pub fn verify_signed_actions<T : Serialize + Display + Clone>(
+    deps: &mut DepsMut,
+    env: &Env,
+    messages: Vec<T>,
+    signed: SignedDataMsg
+) -> Result<(), AuthError> {
+    let msgs = messages.iter()
+        .map(|m| m.to_string())
+        .collect::<Vec<String>>();
+    let nonce = account_number(deps.storage);
+    let cred = utils::cred_from_signed(deps.as_ref(), signed)?;
+    cred.protect_reply(env, ReplayParams::new(nonce, CheckOption::Messages(msgs)))?;
+    ACCOUNT_NUMBER.save(deps.storage, &(nonce + 1))?;
+    Ok(())
 }
+
+
 
 
 
 pub fn get_stored_credentials(
     storage: &dyn Storage
 ) -> Result<StoredCredentials, StorageError> {
-
-
     Ok(StoredCredentials { 
-        has_natives: has_natives(storage),
-        verifying_id: VERIFYING_ID.load(storage).map_err(|_| StorageError::NotFound)?,
-        records: utils::get_credential_records(storage)?,
-        account_number: account_number(storage), 
+        has_natives     :   utils::has_natives(storage),
+        records         :   utils::get_credentials(storage)?,
+        account_number  :   account_number(storage), 
+        primary_id      :   PRIMARY_ID.load(storage)
+                            .map_err(|_| StorageError::NotFound)?,
         #[cfg(feature = "session")]
         sessions    :   None,
     })
 }
 
 
-
-
 pub fn save_credentials(
-    api: &dyn Api,
     storage: &mut dyn Storage,
-    env: &Env,
-    info: &MessageInfo,
-    data: &CredentialData
-) -> Result<CredentialData, AuthError> {
-    let data = data.with_native(info);
-    data.validate()?;
-    data.checked_replay( env, 0u64)?;
-    ACCOUNT_NUMBER.save(storage, &1u64)?;
-
-    let mut has_natives = false;
-    for cred in data.credentials.iter() {
-        cred.verify_cosmwasm(api)?;
-        let info = cred.info();
-        if info.name == CredentialName::Native { 
-            has_natives = true 
-        }
-        CREDS.save(storage, cred.id(), &info)?;
-    }
-    HAS_NATIVES.save(storage, &has_natives)?;
-
-    let verifying = match data.primary_index {
-        Some(i) => data.credentials[i as usize].id(),
-        None => data.credentials.first().unwrap().id()
-    };
-    VERIFYING_ID.save(storage, &verifying)?;
-    Ok(data)
+    data: &VerifiedData
+) -> Result<(), StorageError> {
+    ACCOUNT_NUMBER.save(storage, &data.nonce)?;
+    PRIMARY_ID.save(storage, &data.primary_id)?;
+    HAS_NATIVES.save(storage, &data.has_natives)?;
+    data.credentials
+        .iter()
+        .try_for_each(|(id, info)| 
+            CREDS.save(storage, id.clone(), info))
+        .map_err(|e| StorageError::Write("credentials".to_string(), e.to_string()))
 }
-
 
 
 
@@ -153,154 +139,99 @@ pub fn reset_credentials(
     #[cfg(feature = "session")]
     sessions: bool
 ) -> Result<(), StorageError> {
-    VERIFYING_ID.remove(storage);
+    PRIMARY_ID.remove(storage);
     HAS_NATIVES.remove(storage);
     CREDS.clear(storage);
-    if acc_number {
-        ACCOUNT_NUMBER.remove(storage);
-    }
+    if acc_number { ACCOUNT_NUMBER.remove(storage); }
     #[cfg(feature = "session")]
-    {
-        if sessions {
-            types::stores::SESSIONS.clear(storage);
-        }
+    if sessions {
+        types::stores::SESSIONS.clear(storage);
     }
     Ok(())
 }
-
-
-
-
-/* pub fn update_credentials_signed(
-    api: &dyn Api,
-    storage: &mut dyn Storage,
-    env: &Env,
-    info: &MessageInfo,
-    msg: SignedDataMsg
-) -> Result<(), AuthError> {
-
-    let nonce = account_number(storage);
-    let signed : MsgDataToSign<UpdateOperation> = convert_validate_return(
-        msg.data.as_slice(), env, nonce
-    )?;
-    let cred = cred_from_signed(api, storage, msg)?;
-
-    for op in signed.messages {
-        let had_natives = HAS_NATIVES.load(storage)?;
-        match op {
-            UpdateOperation::Add(data) => {
-                data.with_credential(cred.clone()).validate_replay_all(storage, env)?;
-                add_credentials(api, storage, data.with_native(info.sender.as_str()), had_natives)?;
-            },
-            UpdateOperation::Remove(idx) => {
-                remove_credentials(storage, idx, had_natives)?;
-            }
-        }
-    }
-    ACCOUNT_NUMBER.save(storage, &(nonce + 1))?;
-    Ok(())
-}
- */
 
 
 
 pub fn update_credentials(
-    api: &dyn Api,
-    storage: &mut dyn Storage,
-    env: &Env,
-    op: UpdateOperation,
+    storage  :  &mut dyn Storage,
+    op: &UpdateOperation<VerifiedData>,
 ) -> Result<(), AuthError> {
-    let had_natives = HAS_NATIVES.load(storage)?;
     match op {
         UpdateOperation::Add(data) => {
-            add_credentials(api, storage, env, data, had_natives)
+            add_credentials(storage, &data)?;
         },
         UpdateOperation::Remove(idx) => {
-            remove_credentials(storage, idx, had_natives)?;
-            Ok(())
+            remove_credentials(storage, idx)?;
         }
     }
+    Ok(())
 }
 
 
 
-
-
 pub fn add_credentials(
-    api: &dyn Api,
-    storage: &mut dyn Storage,
-    env: &Env,
-    data: CredentialData,
-    had_natives: bool
+    storage  :  &mut dyn Storage,
+    data     :  &VerifiedData,
 ) -> Result<(), AuthError> {
-    data.validate()?;
+    let nonce = ACCOUNT_NUMBER.load(storage).unwrap_or(0);
+    ensure!(data.nonce == nonce, ReplayError::InvalidNonce(nonce));
+    if data.override_primary { PRIMARY_ID.save(storage, &data.primary_id)?; };
+    ACCOUNT_NUMBER.save(storage, &(nonce +1))?;
+    HAS_NATIVES.update(storage, |had_natives| Ok::<bool, StorageError>(had_natives || data.has_natives))?;
 
-    let nonce = account_number(storage);
-    data.checked_replay(env, nonce)?;
-    data.verify_cosmwasm(api)?;
-
-    ACCOUNT_NUMBER.save(storage, &(nonce +1) )?;
-
-    if let Some(ix) = data.primary_index {
-        VERIFYING_ID.save(storage, &data.credentials[ix as usize].id())?;
-    }
-
-    let mut has_natives = had_natives;
-
-    for cred in data.credentials.iter() {
-        let id = cred.id();
-        ensure!(!CREDS.has(storage, id.clone()), StorageError::AlreadyExists);
-        let info = cred.info();
-        if !has_natives && info.name == CredentialName::Native {
-            has_natives = true;
+    data.credentials
+        .iter()
+        .try_for_each(|(id, info)| {
+            CREDS.save(storage, id.clone(), &info)
+            .map_err(|e| AuthError::Storage(
+                StorageError::Write(id.to_string(), e.to_string())
+            ))
         }
-        CREDS.save(storage, id, &info)?;
-    }
-
-    if !had_natives && has_natives {
-        HAS_NATIVES.save(storage, &true)?;
-    }   
-
-    if !VERIFYING_ID.exists(storage) {
-        VERIFYING_ID.save(storage, &data.credentials[0].id())?;
-    }
-    Ok(())
+    )
 }
 
 
 
 pub fn remove_credentials(
     storage: &mut dyn Storage,
-    idx: Vec<CredentialId>,
-    had_natives: bool
+    idx: &Vec<CredentialId>,
 ) -> Result<Vec<CredentialRecord>, AuthError> {
-    ensure!(!idx.is_empty(), AuthError::generic("Must supply at least one credential to remove"));
+    ensure!(!idx.is_empty(), CredentialError::NoCredentials);
 
-    let all_creds = utils::get_credential_records(storage)?;
-    let left = all_creds.len() - idx.len();
-    ensure!(left > 0, AuthError::generic("Must leave at least one credential"));
+    let idx = idx.iter()
+        .map(|id| id.clone())
+        .collect::<Vec<_>>();
+    
+    let all_creds = utils::get_credentials(storage)?;
+    let had_natives = HAS_NATIVES.load(storage)?;
+    let verifying_id = PRIMARY_ID.load(storage)?;
 
-    let verifying_id = VERIFYING_ID.load(storage)?;
-    let mut native_changed = false;
-    let mut verifying_removed = false;
-
-    let remaining : Vec<(String, CredentialInfo)> = all_creds
+    let (to_remove, remaining): (Vec<_>, Vec<_>) = all_creds
         .into_iter()
-        .filter(|(id, info)| {
-            if idx.contains(id) {
-                if info.name == CredentialName::Native {
-                    native_changed = true;
-                }
-                if *id == verifying_id {
-                    verifying_removed = true;
-                }
-                CREDS.remove(storage, id.to_string());
-                false
-            } else {
-                true
+        .partition(|(id, _)| idx.contains(id));
+
+    ensure!(!remaining.is_empty(), CredentialError::NoneLeft);
+
+    let (
+        native_changed, 
+        verifying_removed
+    ) = to_remove
+        .into_iter()
+        .fold((false, false), |(
+            mut has_native, 
+            mut has_verifying
+        ), (id, info)| {
+            if info.name == CredentialName::Native {
+                has_native = true;
             }
-        }).collect();
-        
+            if id == verifying_id {
+                has_verifying = true;
+            }
+            CREDS.remove(storage, id);
+            (has_native, has_verifying)
+    });
+
+
     if had_natives && native_changed {
         let still_has = remaining
             .iter()
@@ -309,10 +240,63 @@ pub fn remove_credentials(
     }
 
     if verifying_removed {
-        let first = remaining.first().unwrap();
-        VERIFYING_ID.save(storage, &first.0)?;
+        if let Some((id, _)) = remaining.first() {
+            PRIMARY_ID.save(storage, id)?;
+        } else {
+            return Err(CredentialError::NoneLeft.into());
+        }
     }
 
     Ok(remaining)
 }
 
+
+
+
+/* 
+
+
+
+pub fn add_credentials(
+    deps: &mut DepsMut,
+    data: VerifiedData,
+    sender: &str
+) -> Result<Vec<CredentialRecord>, AuthError> {
+    data.validate(sender)?;
+
+    let had_natives = HAS_NATIVES.load(deps.storage)?;
+    let nonce = account_number(deps.storage);
+
+    ACCOUNT_NUMBER.save(deps.storage, &(nonce +1) )?;
+
+    if let Some(ix) = data.primary_index {
+        VERIFYING_ID.save(deps.storage, &data.credentials[ix].id())?;
+    }
+
+    let mut has_natives = had_natives;
+    let mut records = Vec::with_capacity(data.credentials.len());
+
+    for cred in data.credentials.iter() {
+        let id = cred.id();
+        ensure!(!CREDS.has(deps.storage, id.clone()), StorageError::AlreadyExists(id));
+        let info: CredentialInfo = cred.verify(deps.as_ref())?;
+        if !has_natives && info.name == CredentialName::Native {
+            has_natives = true;
+        }
+        CREDS.save(deps.storage, id.clone(), &info)?;
+        records.push((id, info));
+    }
+
+    if !had_natives && has_natives {
+        HAS_NATIVES.save(deps.storage, &true)?;
+    }   
+
+    if !VERIFYING_ID.exists(deps.storage) {
+        VERIFYING_ID.save(deps.storage, &data.credentials[0].id())?;
+    }
+    Ok(records)
+}
+
+
+
+ */

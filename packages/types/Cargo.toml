@@ -26,7 +26,8 @@ thiserror               = { version = "2.0.12", default-features = false }
 
 
 [features]
-default   =   ["cw_1"]
-cw_1      =   ["dep:cw-storage-plus-one", "smart-account-auth/cosmwasm_1"]
-cw_2      =   ["dep:cw-storage-plus", "smart-account-auth/cosmwasm"]
-session   =   ["smart-account-auth/session", "dep:protos"]
+default      =   ["cosmwasm_v1"]
+cosmwasm_v1  =   ["dep:cw-storage-plus-one", "smart-account-auth/cosmwasm_v1"]
+cosmwasm     =   ["dep:cw-storage-plus", "smart-account-auth/cosmwasm"]
+session      =   ["smart-account-auth/session", "dep:protos"]
+multi        =   []

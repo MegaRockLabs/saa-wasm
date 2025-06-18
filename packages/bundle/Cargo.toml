@@ -18,14 +18,15 @@ crate-type  =  ["cdylib", "rlib"]
 [dependencies]
 smart-account-auth      = { workspace = true }
 saa-schema              = { workspace = true }
+# saa-common              = { workspace = true }
 types                   = { workspace = true }
 
 [features]
-default   =   ["cw_1", "session"]
-cw_1      =   ["types/cw_1"]
-cw_2      =   ["types/cw_2"]
-session   =   ["types/session"]
+default      =   ["cosmwasm_v1", "session"]
+cosmwasm_v1  =   ["types/cosmwasm_v1"]
+cosmwasm     =   ["types/cosmwasm"]
+session      =   ["types/session"]
 
-utils     =   ["smart-account-auth/utils"]
-multimsg  =   [ ]
-types     =   [ ]
+utils        =   ["smart-account-auth/utils"]
+multi        =   [ ]
+types        =   [ ]

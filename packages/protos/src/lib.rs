@@ -1,8 +1,9 @@
+#[allow(unused, unused_imports)]
 use quote::{ToTokens, quote};
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, parse_quote, AttributeArgs, DataEnum, DeriveInput, Meta, MetaList, NestedMeta};
+use syn::{parse_macro_input, parse_quote, AttributeArgs, Meta, NestedMeta, /* DataEnum, DeriveInput, MetaList, */};
 
-
+/* 
 
 
 fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::TokenStream {
@@ -70,96 +71,8 @@ fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::Tok
 
 
 
+ */
 
-
-
-fn merge_enum_variants(
-    metadata: TokenStream,
-    left_ts: TokenStream,
-    right_ts: TokenStream,
-) -> TokenStream {
-    use syn::Data::Enum;
-
-    // Parse metadata and check no args
-    let args = parse_macro_input!(metadata as AttributeArgs);
-    if let Some(first_arg) = args.first() {
-        return syn::Error::new_spanned(first_arg, "macro takes no arguments")
-            .to_compile_error()
-            .into();
-    }
-
-    // Parse left and ensure it's enum
-    let mut left: DeriveInput = parse_macro_input!(left_ts);
-    let variants = match &mut left.data {
-        syn::Data::Enum(DataEnum { variants, .. }) => variants,
-        _ => return syn::Error::new(left.ident.span(), "only enums can accept variants")
-            .to_compile_error()
-            .into(),
-    };
-
-    // Parse right and ensure it's enum
-    let right: DeriveInput = parse_macro_input!(right_ts);
-    let Enum(DataEnum { variants: to_add, .. }) = right.data else {
-        return syn::Error::new(left.ident.span(), "only enums can provide variants")
-            .to_compile_error()
-            .into();
-    };
-
-    // Merge variants
-    variants.extend(to_add.into_iter());
-
-    // Return modified left
-    left.into_token_stream().into()
-}
-
-
-
-
-
-fn generate_session_macro<F>(
-    metadata: TokenStream,
-    input: TokenStream,
-    right_enum: TokenStream,
-    extra_impl: F,
-    extra_attrs: Option<Vec<syn::Attribute>>,
-) -> TokenStream
-where
-    F: Fn(&syn::Ident, &syn::Generics, &proc_macro2::TokenStream, &proc_macro2::TokenStream, Option<&syn::WhereClause>) -> proc_macro2::TokenStream,
-{
-    let merged = merge_enum_variants(metadata, input, right_enum);
-    // Try to parse the merged stream back into DeriveInput
-    let mut parsed = match syn::parse::<DeriveInput>(merged.clone()) {
-        Ok(val) => val,
-        Err(err) => return err.to_compile_error().into(),
-    };
-
-    
-    // If extra attributes were provided, extend them on the parsed item
-    if let Some(extra) = extra_attrs {
-        parsed.attrs.extend(extra);
-    }
-    
-    let enum_name = &parsed.ident;
-
-    let generics = &parsed.generics;
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-    let common_impl = strum_enum(&parsed, &[]);
-
-    let custom_impl = extra_impl(
-        enum_name,
-        generics,
-        &quote! { #impl_generics },
-        &quote! { #ty_generics },
-        where_clause,
-    );
-
-    quote! {
-        #common_impl
-        #custom_impl
-    }
-    .into()
-}
 
 
 
@@ -180,11 +93,12 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
             .into();
         }
     };
-
+    let act_id = non_session_ty.get_ident().clone().unwrap();
+    // println!("act_id: {:?}", act_id);
+    
     // Parse the enum itself
     let mut input_enum = parse_macro_input!(input as syn::ItemEnum);
     let enum_ident = &input_enum.ident;
-    let (impl_generics, ty_generics, where_clause) = input_enum.generics.split_for_impl();
 
     // Add `SessionActions` variant to the enum
     input_enum.variants.push(syn::Variant {
@@ -196,7 +110,7 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
                 vis: syn::Visibility::Inherited,
                 ident: None,
                 colon_token: None,
-                ty: syn::parse_quote!(::saa_wasm::SessionActionMsg<#non_session_ty>),
+                ty: syn::parse_quote!(::saa_wasm::SessionAction<#act_id>),
             })
             .collect(),
         }),
@@ -204,36 +118,22 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         attrs: vec![],
     });
 
-    // Generate the trait impl
-    let trait_impl = quote! {
-        impl #impl_generics ::saa_wasm::SessionActionsMatch<#non_session_ty>
-            for #enum_ident #ty_generics #where_clause
-        {
-            fn match_actions(&self) -> Option<::saa_wasm::SessionActionMsg<#non_session_ty>> {
-                match self {
-                    Self::SessionActions(msg) => Some((**msg).clone()),
-                    _ => None,
-                }
-            }
-        }
-    };
+
 
     // Combine the updated enum and impl
     let output = quote! {
         #input_enum
-        #trait_impl
+        //#trait_impl
     };
 
     output.into()
 }
 
 
-
 #[proc_macro_attribute]
 pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(metadata as AttributeArgs);
 
-    // Ensure exactly one argument
     if args.len() != 1 {
         return syn::Error::new_spanned(
             quote! { #[session_query(..)] },
@@ -243,19 +143,8 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
         .into();
     }
 
-    // Extract identifier (e.g., ExecuteMsg)
-    let base_msg_ident = match &args[0] {
-        syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
-            Some(ident) => ident.clone(),
-            None => {
-                return syn::Error::new_spanned(
-                    path,
-                    "expected identifier like `ExecuteMsg`"
-                )
-                .to_compile_error()
-                .into();
-            }
-        },
+    let action_msg_ty = match &args[0] {
+        syn::NestedMeta::Meta(syn::Meta::Path(path)) => path.clone(),
         other => {
             return syn::Error::new_spanned(
                 other,
@@ -266,41 +155,36 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let mut input_enum = match syn::parse::<syn::ItemEnum>(input) {
+        Ok(e) => e,
+        Err(err) => return err.to_compile_error().into(),
+    };
 
-    let extra_attrs = Some(vec![parse_quote! {
+    // Add #[derive(QueryResponses)]
+    input_enum.attrs.push(parse_quote! {
         #[derive(::saa_schema::QueryResponses)]
-    }]);
+    });
 
-    // Proceed as before
-    generate_session_macro(
-        TokenStream::new(),
-        input,
-        quote! {
-            enum SessionRight {
-                #[returns(::saa_wasm::QueryResTemplate)]
-                SessionQueries(Box<::saa_wasm::SessionQueryMsg<Self>>),
-            }
+    // Add SessionQueries variant using Self in generic position
+    input_enum.variants.push(parse_quote! {
+        #[returns(::saa_wasm::QueryResTemplate)]
+        SessionQueries(::saa_wasm::SessionQueryMsg<Self>)
+    });
+
+    let enum_ident = &input_enum.ident;
+    let generics = &input_enum.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    let trait_impl = quote! {
+        impl #impl_generics ::saa_wasm::QueryUsesActions for #enum_ident #ty_generics #where_clause {
+            type ActionMsg = #action_msg_ty;
         }
-        .into(),
-        move |enum_name, _generics, impl_generics, ty_generics, where_clause| {
-            let base_msg = &base_msg_ident;
-            quote! {
-                impl #impl_generics ::saa_wasm::SessionQueriesMatch for #enum_name #ty_generics #where_clause {
-                    fn match_queries(&self) -> Option<::saa_wasm::SessionQueryMsg<Self>> {
-                        match self {
-                            Self::SessionQueries(msg) => Some((**msg).clone()),
-                            _ => None,
-                        }
-                    }
-                }
-                impl #impl_generics ::saa_wasm::QueryUsesActions for #enum_name #ty_generics #where_clause {
-                    type ActionMsg = #base_msg;
-                }
-            }
-        },
-        extra_attrs,
-    )
+    };
+
+    quote! {
+        #input_enum
+        #trait_impl
+    }
+    .into()
 }
-
-
 

@@ -1,8 +1,8 @@
 #[cfg(feature = "session")]
 pub mod sessions;
-pub mod errors;
 pub mod stores;
 
+pub use smart_account_auth::errors;
 pub use smart_account_auth::cosmwasm_std as wasm;
 pub use saa_schema::{saa_type, serde, strum, strum_macros};
 
@@ -31,7 +31,7 @@ pub struct StoredCredentials {
     pub has_natives     :   bool,
 
     /// Default ID used for verification
-    pub verifying_id    :   CredentialId,
+    pub primary_id      :   CredentialId,
 
      /// ID and info about every stored credential
     pub records         :   Vec<CredentialRecord>,

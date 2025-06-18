@@ -3,10 +3,8 @@ use saa_schema::strum::{IntoDiscriminant, VariantNames, VariantArray};
 use saa_schema::strum_macros::{Display, EnumString, EnumDiscriminants};
 use saa_schema::QueryResponses;
 use smart_account_auth::cosmwasm_std::Binary;
-use smart_account_auth::msgs::{Action, AllQueryDerivation};
-use smart_account_auth::SessionError;
-use smart_account_auth::{msgs::{DerivableMsg, ActionDerivation}};
-
+use smart_account_auth::msgs::{Action, ActionDerivation, AllQueryDerivation};
+use smart_account_auth::{SessionError, DerivableMsg};
 
 
 #[saa_type]
