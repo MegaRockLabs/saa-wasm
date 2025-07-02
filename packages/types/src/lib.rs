@@ -41,6 +41,6 @@ pub struct StoredCredentials {
 
     // Session keys that can be used used for specific actions
     #[cfg(feature = "session")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sessions        :   Option<CredentialId>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub sessions        :   Vec<(String, smart_account_auth::Session)>,
 }

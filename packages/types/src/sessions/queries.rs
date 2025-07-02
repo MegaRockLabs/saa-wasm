@@ -53,7 +53,9 @@ pub trait SessionQueriesMatch : QueryUsesActions
 where
     <<Self as QueryUsesActions>::ActionMsg as IntoDiscriminant>::Discriminant: 'static,
 {
-    fn match_queries(&self) -> Option<SessionQueryMsg<Self>>;
+    fn match_queries(&self) -> Option<SessionQueryMsg<Self>> 
+    where <<Self as QueryUsesActions>::ActionMsg as IntoDiscriminant>::Discriminant: VariantArray;
+
 }
 
 

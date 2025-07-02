@@ -73,35 +73,9 @@ pub fn increment_account_number(
 
 
 
-
-#[cfg(feature = "utils")]
-pub fn has_credential(
-    storage: &dyn Storage,
-    id: smart_account_auth::CredentialId,
-    name: Option<smart_account_auth::CredentialName>
-) -> bool {
-    if let Some(name) = name {
-        CREDS.load(storage, id)
-            .map(|c|c.name == name)
-            .unwrap_or(false)
-    } else {
-        CREDS.has(storage, id)
-    }
-}
-
-
 #[cfg(feature = "utils")]
 pub fn credential_count(storage: &dyn Storage) -> usize {
     CREDS.keys_raw(storage, None, None, types::wasm::Order::Ascending).count()
-}
-
-
-
-#[cfg(all(feature = "session", feature = "utils"))]
-pub fn get_session_records(
-    storage: &dyn Storage,
-) -> Result<Vec<(String, smart_account_auth::Session)>, StorageError> {
-    types::stores::get_map_records(storage, &types::stores::SESSIONS, "session keys")
 }
 
 

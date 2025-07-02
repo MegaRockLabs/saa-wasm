@@ -8,19 +8,25 @@ pub use {types::stores, smart_account_auth as saa_types};
 pub use utils::*;
 
 
-
+#[cfg(feature = "session")]
 pub use {
+    session::{handle_session_action, handle_session_query},
     types::{
-        macros::{session_action, session_query},
-        sessions::{queries::*, actions::*}, 
-        StoredCredentials, UpdateOperation,
-    },
-    session::{handle_session_query, handle_session_action},
+        macros::{session_query, session_action},
+        sessions::{queries::*, actions::*}
+    }
 };
+
+pub use types::{
+    StoredCredentials, UpdateOperation
+};
+
 
 use smart_account_auth::{
-    msgs::SignedDataMsg, CheckOption, CredentialId, CredentialName, CredentialRecord, ReplayParams, ReplayProtection, VerifiedData
+    msgs::SignedDataMsg, CheckOption, Credential, CredentialId, CredentialName, CredentialRecord, 
+    ReplayParams, ReplayProtection, VerifiedData
 };
+
 use types::{
     stores::{ACCOUNT_NUMBER, HAS_NATIVES, PRIMARY_ID, CREDENTIAL_INFOS as CREDS}, 
     errors::{AuthError, CredentialError, ReplayError, StorageError}, 
@@ -97,6 +103,24 @@ pub fn verify_signed_actions<T : Serialize + Display + Clone>(
 
 
 
+pub fn verify_credential(
+    storage: &mut dyn Storage,
+    env: &Env,
+    cred: Credential,
+    messages: Option<Vec<String>>
+) -> Result<(), AuthError> {
+    let nonce = account_number(storage);
+    let check_option = match messages {
+        Some(msgs) => CheckOption::Messages(msgs),
+        None => CheckOption::Nothing,
+    };
+    cred.protect_reply(env, ReplayParams::new(nonce, check_option))?;
+    ACCOUNT_NUMBER.save(storage, &(nonce + 1))?;
+    Ok(())
+}
+
+
+
 
 
 pub fn get_stored_credentials(
@@ -106,12 +130,12 @@ pub fn get_stored_credentials(
         has_natives     :   utils::has_natives(storage),
         records         :   utils::get_credentials(storage)?,
         account_number  :   account_number(storage), 
-        primary_id      :   PRIMARY_ID.load(storage)
-                            .map_err(|_| StorageError::NotFound)?,
+        primary_id      :   PRIMARY_ID.load(storage).map_err(|_| StorageError::NotFound)?,
         #[cfg(feature = "session")]
-        sessions    :   None,
+        sessions        :   session::get_session_records(storage)?,
     })
 }
+
 
 
 pub fn save_credentials(
@@ -129,6 +153,22 @@ pub fn save_credentials(
 }
 
 
+
+
+
+pub fn has_credential(
+    storage: &dyn Storage,
+    id: smart_account_auth::CredentialId,
+    name: Option<smart_account_auth::CredentialName>
+) -> bool {
+    if let Some(name) = name {
+        CREDS.load(storage, id)
+            .map(|c|c.name == name)
+            .unwrap_or(false)
+    } else {
+        CREDS.has(storage, id)
+    }
+}
 
 
 

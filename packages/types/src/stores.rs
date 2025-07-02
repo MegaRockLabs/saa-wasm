@@ -20,7 +20,7 @@ pub const HAS_NATIVES : Item<bool> = Item::new("cw_auth_hn");
 pub const CREDENTIAL_INFOS: Map<CredentialId, CredentialInfo> = Map::new("cw_auth_creds");
 
 
-/// Storage of used nonces  to prevent replay attacks. &str to boolean
+/// Current account number or nonce that must be used for replay attack protection
 pub const ACCOUNT_NUMBER : Item<u64> = Item::new("cw_auth_an");
 
 

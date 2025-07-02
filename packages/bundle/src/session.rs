@@ -3,28 +3,18 @@ use smart_account_auth::{
     Caller, Credential, DerivableMsg, Session
 };
 use types::{
-    sessions::{
+    errors::{AuthError, SessionError, StorageError}, serde::{self, Serialize}, sessions::{
         actions::{MsgArg, SessionAction, SessionActionMsg}, 
         queries::{QueryUsesActions, SessionQueryMsg}
-    }, 
-    wasm::{
+    }, stores::{get_map_records, map_get, map_remove, map_save, SESSIONS}, strum::{IntoDiscriminant, VariantArray, VariantNames}, wasm::{
         ensure, to_json_binary, Api, Binary, 
         Deps, DepsMut, Env, MessageInfo, Response, 
         StdError, StdResult, Storage
-    }, 
-    errors::{AuthError, SessionError, StorageError}, 
-    stores::{map_get, map_remove, map_save, SESSIONS}, 
-    strum::{IntoDiscriminant, VariantArray, VariantNames}, 
-    serde::{self, Serialize}, 
+    } 
 };
 
 use crate::{utils::session_cred_from_signed, verify_native, verify_signed_actions};
 
-/* 
-pub enum AdminAuth {
-    
-}
- */
 
 
 fn validate_common(
@@ -56,6 +46,7 @@ pub fn verify_session_native(
 }
 
 
+
 pub fn verify_session_signed<T : Serialize + DerivableMsg>(
     deps: &mut DepsMut,
     env: &Env,
@@ -85,6 +76,12 @@ pub fn verify_session_signed<T : Serialize + DerivableMsg>(
 }
 
 
+
+pub fn get_session_records(
+    storage: &dyn Storage
+) -> Result<Vec<(String, Session)>, StorageError> {
+    get_map_records(storage, &SESSIONS, "sessions")
+}
 
 
 
