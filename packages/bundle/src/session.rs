@@ -13,7 +13,7 @@ use types::{
     } 
 };
 
-use crate::{utils::session_cred_from_signed, verify_native, verify_signed_actions};
+use crate::{utils::session_cred_from_signed};
 
 
 
@@ -101,7 +101,6 @@ pub fn update_session(
 
 
 
-
 pub fn handle_session_action<M, F, E>(
     mut deps: DepsMut,
     env: &Env,
@@ -153,6 +152,7 @@ pub fn handle_session_action<M, F, E>(
 
         admin_action => {
             let granter = admin.unwrap_or(env.contract.address.to_string());
+            #[cfg(feature = "signed")]
             match action.signed {
                 Some(signed) => {
                     verify_signed_actions(&mut deps, env, vec![admin_action.clone()], signed)?;

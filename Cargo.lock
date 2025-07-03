@@ -637,7 +637,7 @@ dependencies = [
 
 [[package]]
 name = "cw-auth-tests"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.6"
 dependencies = [
  "cosmwasm-schema 2.2.2",
  "saa-schema",
@@ -1898,7 +1898,7 @@ dependencies = [
 
 [[package]]
 name = "saa-wasm"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.6"
 dependencies = [
  "saa-schema",
  "saa-wasm-types",
@@ -1916,7 +1916,7 @@ dependencies = [
 
 [[package]]
 name = "saa-wasm-types"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.6"
 dependencies = [
  "cosmwasm-schema 1.5.11",
  "cw-storage-plus 1.2.0",

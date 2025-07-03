@@ -29,4 +29,5 @@ session      =   ["types/session"]
 
 utils        =   ["smart-account-auth/utils"]
 multi        =   [ ]
+signed       =   []
 types        =   [ ]

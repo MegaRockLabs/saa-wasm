@@ -23,18 +23,16 @@ pub use types::{
 
 
 use smart_account_auth::{
-    msgs::SignedDataMsg, CheckOption, Credential, CredentialId, CredentialName, CredentialRecord, 
+    CheckOption, Credential, CredentialId, CredentialName, CredentialRecord, 
     ReplayParams, ReplayProtection, VerifiedData
 };
 
 use types::{
     stores::{ACCOUNT_NUMBER, HAS_NATIVES, PRIMARY_ID, CREDENTIAL_INFOS as CREDS}, 
     errors::{AuthError, CredentialError, ReplayError, StorageError}, 
-    wasm::{ensure, Deps, DepsMut, Env, Storage}, 
-    serde::Serialize, 
+    wasm::{ensure, Env, Storage}, 
 };
 
-use std::fmt::Display;
 
 
 
@@ -57,6 +55,7 @@ pub fn verify_native(
 }
 
 
+#[cfg(feature = "signed")]
 pub fn verify_data(
     deps: Deps,
     msg: SignedDataMsg
@@ -67,7 +66,7 @@ pub fn verify_data(
 
 
 
-
+#[cfg(feature = "signed")]
 pub fn verify_signed<T : Serialize + Display + Clone>(
     deps: Deps,
     env: &Env,
@@ -84,7 +83,7 @@ pub fn verify_signed<T : Serialize + Display + Clone>(
 }
 
 
-
+#[cfg(feature = "signed")]
 pub fn verify_signed_actions<T : Serialize + Display + Clone>(
     deps: &mut DepsMut,
     env: &Env,
@@ -103,19 +102,31 @@ pub fn verify_signed_actions<T : Serialize + Display + Clone>(
 
 
 
-pub fn verify_credential(
-    storage: &mut dyn Storage,
+pub fn verify_cred_query(
+    storage: &dyn Storage,
     env: &Env,
     cred: Credential,
     messages: Option<Vec<String>>
-) -> Result<(), AuthError> {
+) -> Result<u64, AuthError> {
     let nonce = account_number(storage);
     let check_option = match messages {
         Some(msgs) => CheckOption::Messages(msgs),
         None => CheckOption::Nothing,
     };
     cred.protect_reply(env, ReplayParams::new(nonce, check_option))?;
-    ACCOUNT_NUMBER.save(storage, &(nonce + 1))?;
+    Ok(nonce + 1)
+}
+
+
+
+pub fn verify_cred_actions(
+    storage: &mut dyn Storage,
+    env: &Env,
+    cred: Credential,
+    messages: Option<Vec<String>>
+) -> Result<(), AuthError> {
+    let new_nonce = &verify_cred_query(storage, env, cred, messages)?;
+    ACCOUNT_NUMBER.save(storage, new_nonce)?;
     Ok(())
 }
 
@@ -290,53 +301,3 @@ pub fn remove_credentials(
     Ok(remaining)
 }
 
-
-
-
-/* 
-
-
-
-pub fn add_credentials(
-    deps: &mut DepsMut,
-    data: VerifiedData,
-    sender: &str
-) -> Result<Vec<CredentialRecord>, AuthError> {
-    data.validate(sender)?;
-
-    let had_natives = HAS_NATIVES.load(deps.storage)?;
-    let nonce = account_number(deps.storage);
-
-    ACCOUNT_NUMBER.save(deps.storage, &(nonce +1) )?;
-
-    if let Some(ix) = data.primary_index {
-        VERIFYING_ID.save(deps.storage, &data.credentials[ix].id())?;
-    }
-
-    let mut has_natives = had_natives;
-    let mut records = Vec::with_capacity(data.credentials.len());
-
-    for cred in data.credentials.iter() {
-        let id = cred.id();
-        ensure!(!CREDS.has(deps.storage, id.clone()), StorageError::AlreadyExists(id));
-        let info: CredentialInfo = cred.verify(deps.as_ref())?;
-        if !has_natives && info.name == CredentialName::Native {
-            has_natives = true;
-        }
-        CREDS.save(deps.storage, id.clone(), &info)?;
-        records.push((id, info));
-    }
-
-    if !had_natives && has_natives {
-        HAS_NATIVES.save(deps.storage, &true)?;
-    }   
-
-    if !VERIFYING_ID.exists(deps.storage) {
-        VERIFYING_ID.save(deps.storage, &data.credentials[0].id())?;
-    }
-    Ok(records)
-}
-
-
-
- */
