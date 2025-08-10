@@ -1,14 +1,9 @@
 use types::{
-    errors::{AuthError, StorageError}, stores::{get_map_records, map_get, CREDENTIAL_INFOS as CREDS}, 
-    wasm::{Deps, Storage}
+    errors::StorageError, stores::{get_map_records, CREDENTIAL_INFOS as CREDS}, 
+    wasm::Storage
 };
 
-use smart_account_auth::{
-    build_credential, msgs::SignedDataMsg, 
-    types::{errors::CredentialError, exts::PayloadExtension}, 
-    Credential, CredentialRecord
-};
-
+use smart_account_auth::CredentialRecord;
 
 
 pub fn has_natives(
@@ -26,24 +21,6 @@ pub fn get_credentials(
 }
 
 
-
-
-
-pub fn cred_from_signed(
-    deps: Deps,
-    msg: SignedDataMsg,
-) -> Result<Credential, AuthError> {
-    let (id, hrp, ext) = parse_cred_args(
-        types::stores::PRIMARY_ID.load(deps.storage)
-            .map_err(|_| CredentialError::NoCredentials)?.as_str(),
-        &msg
-    );
-    let mut info = map_get(deps.storage, &CREDS, &id, "credential")?;
-    info.hrp = hrp.or(info.hrp);
-    let cred = build_credential((id, info), msg, ext)?;
-    cred.verify(deps)?;
-    Ok(cred)
-}
 
 
 
@@ -76,49 +53,5 @@ pub fn increment_account_number(
 #[cfg(feature = "utils")]
 pub fn credential_count(storage: &dyn Storage) -> usize {
     CREDS.keys_raw(storage, None, None, types::wasm::Order::Ascending).count()
-}
-
-
-
-
-#[cfg(feature = "session")]
-pub fn session_cred_from_signed(
-    deps: Deps,
-    key: &str,
-    msg: SignedDataMsg,
-) -> Result<Credential, AuthError> {
-    use smart_account_auth::build_credential;
-
-    let (id, hrp, ext) = parse_cred_args(key, &msg);
-    let session = map_get(
-        deps.storage, &types::stores::SESSIONS, &id, "session key")
-        .map_err(|e| AuthError::generic(e.to_string())
-    )?;
-
-    let mut info = session.grantee.1.clone();
-    info.hrp = hrp.or(info.hrp);
-    let cred = build_credential((id, info), msg, ext)?;
-    cred.verify(deps)?;
-    Ok(cred)
-}
-
-
-
-fn parse_cred_args(
-    id: &str,
-    msg: &SignedDataMsg
-) -> (String, Option<String>, Option<PayloadExtension>) {
-
-    match &msg.payload {
-        Some(payload) => {
-            let id = payload.credential_id
-                .clone()
-                .unwrap_or(id.to_string());
-
-            (id, payload.hrp.clone(), payload.extension.clone())
-            
-        }   
-        None => (id.to_string(), None, None)
-    }
 }
 

@@ -124,10 +124,10 @@ pub fn verify_cred_actions(
     env: &Env,
     cred: Credential,
     messages: Option<Vec<String>>
-) -> Result<(), AuthError> {
-    let new_nonce = &verify_cred_query(storage, env, cred, messages)?;
-    ACCOUNT_NUMBER.save(storage, new_nonce)?;
-    Ok(())
+) -> Result<u64, AuthError> {
+    let new_nonce = verify_cred_query(storage, env, cred, messages)?;
+    ACCOUNT_NUMBER.save(storage, &new_nonce)?;
+    Ok(new_nonce)
 }
 
 

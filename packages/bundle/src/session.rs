@@ -1,3 +1,5 @@
+#![allow(unused_imports, dead_code, unused_variables)]
+
 use smart_account_auth::{
     msgs::{Action, AllQueryDerivation, MsgDataToSign, SignedDataMsg}, 
     Caller, Credential, DerivableMsg, Session
@@ -12,9 +14,6 @@ use types::{
         StdError, StdResult, Storage
     } 
 };
-
-use crate::{utils::session_cred_from_signed};
-
 
 
 fn validate_common(
@@ -55,7 +54,7 @@ pub fn verify_session_signed<T : Serialize + DerivableMsg>(
     msgs: MsgArg<T>,
     signed: SignedDataMsg
 ) -> Result<(), AuthError> {
-    #[cfg(feature = "multi")]
+    /* #[cfg(feature = "multi")]
     let messages = msgs.iter().map(|m|m.to_json_string()).collect::<Result<Vec<String>, _>>()?;
     #[cfg(not(feature = "multi"))]
     let messages = vec![msgs.to_json_string()?];
@@ -71,7 +70,7 @@ pub fn verify_session_signed<T : Serialize + DerivableMsg>(
     let cred = session_cred_from_signed(deps_ref,  key, signed)?;
     validate_common(deps_ref, &session, &cred, &msgs)?;
     session.nonce = nonce + 1;
-    map_save(deps.storage, &SESSIONS, key, &session, "session key")?;
+    map_save(deps.storage, &SESSIONS, key, &session, "session key")?; */
     Ok(())
 }
 
