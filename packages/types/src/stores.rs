@@ -3,7 +3,7 @@ pub use cw_storage_plus_one as cw_storage_plus;
 
 use cw_storage_plus::{Item, Map};
 use smart_account_auth::{CredentialInfo, CredentialId};
-use crate::wasm::{StdError, Storage, Order};
+use crate::wasm::{StdError, Storage};
 use crate::serde::{de::DeserializeOwned, Serialize};
 use crate::errors::StorageError;
 
@@ -32,7 +32,7 @@ pub const SESSIONS: Map<String, smart_account_auth::Session> = Map::new("cw_auth
 
 // Feauture only because not used elsewhere
 pub fn item_exist<T>(
-    storage: &mut dyn Storage,
+    storage: &dyn Storage,
     item: &Item<T>,
 ) -> bool 
     where T: Serialize + DeserializeOwned
@@ -99,7 +99,7 @@ pub fn get_map_records<V>(
     where V: Serialize + DeserializeOwned
 {
     map
-    .range(storage, None, None, Order::Ascending)
+    .range(storage, None, None, crate::wasm::Order::Ascending)
     .collect::<Result<Vec<(CredentialId, V)>, StdError>>()
     .map_err(|e| StorageError::Read(name.to_string(), e.to_string()))
 }

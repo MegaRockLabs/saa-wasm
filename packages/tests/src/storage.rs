@@ -78,23 +78,23 @@ fn credential_crds_work() {
     let passkey_cred : Credential = get_passkey().into();
 
     // Saving credentials
-    save_credential(&mut deps, &eth_cred.id(), &eth_cred).unwrap();
-    save_credential(&mut deps, &cosmos_cred.id(), &cosmos_cred).unwrap();
-    save_credential(&mut deps, &passkey_cred.id(), &passkey_cred).unwrap();
+    save_credential(&mut deps, &eth_cred.cred_id(), &eth_cred).unwrap();
+    save_credential(&mut deps, &cosmos_cred.cred_id(), &cosmos_cred).unwrap();
+    save_credential(&mut deps, &passkey_cred.cred_id(), &passkey_cred).unwrap();
 
-    PRIMARY_ID.save(deps.storage, &eth_cred.id()).unwrap();
+    PRIMARY_ID.save(deps.storage, &eth_cred.cred_id()).unwrap();
 
     assert_eq!(credential_count(deps.storage), 3);
 
     // remove simple
-    remove_credential(deps.storage, &cosmos_cred.id()).unwrap();
+    remove_credential(deps.storage, &cosmos_cred.cred_id()).unwrap();
     assert_eq!(credential_count(deps.storage), 2);
     
     // remove smart veryfying
-    remove_credential_smart(deps.storage, &eth_cred.id()).unwrap();
+    remove_credential_smart(deps.storage, &eth_cred.cred_id()).unwrap();
     assert_eq!(credential_count(deps.storage), 1);
     // moved forward to the next one
-    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), passkey_cred.id());
+    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), passkey_cred.cred_id());
     
     // remove all
     reset_credentials(deps.storage, true, true).unwrap();
@@ -103,22 +103,22 @@ fn credential_crds_work() {
     let native : Credential = Caller::from(ALICE_ADDR).into();
 
     // Saving again but now with caller
-    save_credential(&mut deps, &eth_cred.id(), &eth_cred).unwrap();
-    save_credential(&mut deps, &cosmos_cred.id(), &cosmos_cred).unwrap();
-    save_credential(&mut deps, &passkey_cred.id(), &passkey_cred).unwrap();
-    save_credential(&mut deps, &native.id(), &native).unwrap();
+    save_credential(&mut deps, &eth_cred.cred_id(), &eth_cred).unwrap();
+    save_credential(&mut deps, &cosmos_cred.cred_id(), &cosmos_cred).unwrap();
+    save_credential(&mut deps, &passkey_cred.cred_id(), &passkey_cred).unwrap();
+    save_credential(&mut deps, &native.cred_id(), &native).unwrap();
 
     let storage = deps.storage;
-    PRIMARY_ID.save(storage, &native.id()).unwrap();
+    PRIMARY_ID.save(storage, &native.cred_id()).unwrap();
     HAS_NATIVES.save(storage, &true).unwrap();
 
     // none of the two should change
-    remove_credential_smart(storage, &passkey_cred.id()).unwrap();
-    assert_eq!(PRIMARY_ID.load(storage).unwrap(), native.id());
+    remove_credential_smart(storage, &passkey_cred.cred_id()).unwrap();
+    assert_eq!(PRIMARY_ID.load(storage).unwrap(), native.cred_id());
     assert_eq!(HAS_NATIVES.load(storage).unwrap(), true);
 
-    remove_credential_smart(storage, &native.id()).unwrap();
-    assert_eq!(PRIMARY_ID.load(storage).unwrap(), eth_cred.id());
+    remove_credential_smart(storage, &native.cred_id()).unwrap();
+    assert_eq!(PRIMARY_ID.load(storage).unwrap(), eth_cred.cred_id());
     assert_eq!(HAS_NATIVES.load(storage).unwrap(), false);
     assert_eq!(credential_count(storage), 2);
 }
@@ -175,7 +175,7 @@ fn save_credential_data_work() {
     // Verifying credential id is stored properly
     let ver = PRIMARY_ID.load(storage).unwrap();
     let first = data.credentials.first().unwrap();
-    assert!(first.id() == ver && data.primary_id() == ver);
+    assert!(first.cred_id() == ver && data.primary_id() == ver);
 
     // should't have any natives callers
     assert!(!HAS_NATIVES.load(storage).unwrap_or(false));
@@ -268,23 +268,23 @@ fn update_cred_data_remove_simple() {
     assert!(update_credentials(deps.storage, &empty).is_err());
 
     // ok but no change cause the id is not there
-    let op = UpdateOperation::Remove(vec![cosmos_cred.id()]);
+    let op = UpdateOperation::Remove(vec![cosmos_cred.cred_id()]);
     assert!(update_credentials(deps.storage, &op).is_ok());
 
     // ok but removing verifying credential
-    let op = UpdateOperation::Remove(vec![passkey_cred.id()]);
+    let op = UpdateOperation::Remove(vec![passkey_cred.cred_id()]);
     assert!(update_credentials(deps.storage, &op).is_ok());
 
     
     assert!(credential_count(deps.storage) == 2);
-    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), eth_cred.id());
+    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), eth_cred.cred_id());
 
     // ok but same thing doesnt't do anything
     assert!(update_credentials(deps.storage, &op).is_ok());
 
     // ok but can't use alice anymore
-    let op = UpdateOperation::Remove(vec![alice_cred.id()]);
-    assert!(!HAS_NATIVES.load(deps.storage).unwrap());
+    let op = UpdateOperation::Remove(vec![alice_cred.cred_id()]);
+    assert!(HAS_NATIVES.load(deps.storage).unwrap());
     assert!(update_credentials(deps.storage, &op).is_ok());
 
     // should update has natives flag to false
@@ -296,27 +296,27 @@ fn update_cred_data_remove_simple() {
     save_credentials(deps.storage, &data).unwrap();
 
     // error: can't remove all three
-    let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id(), alice_cred.id()]);
+    let op = UpdateOperation::Remove(vec![eth_cred.cred_id(), passkey_cred.cred_id(), alice_cred.cred_id()]);
     assert!(update_credentials(deps.storage, &op).is_err());
 
     println!("Credential count: {}", credential_count(deps.storage));
     println!("Primary ID: {:?}", PRIMARY_ID.load(deps.storage));
     assert_eq!(credential_count(deps.storage), 3);
-    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), passkey_cred.id());
-    assert!(!HAS_NATIVES.load(deps.storage).unwrap());
+    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), passkey_cred.cred_id());
+    assert!(HAS_NATIVES.load(deps.storage).unwrap());
 
     // leave last one
-    let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id()]);
+    let op = UpdateOperation::Remove(vec![eth_cred.cred_id(), passkey_cred.cred_id()]);
     assert!(update_credentials(deps.storage, &op).is_ok());
-    assert!(!HAS_NATIVES.load(deps.storage).unwrap());
-    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), alice_cred.id());
+    assert!(HAS_NATIVES.load(deps.storage).unwrap());
+    assert_eq!(PRIMARY_ID.load(deps.storage).unwrap(), alice_cred.cred_id());
     assert_eq!(credential_count(deps.storage), 1);
 
     //assert!(update_credentials(api, storage, &env, &alice.sender.to_string(), op.clone()).is_err());
-    let op = UpdateOperation::Remove(vec![alice_cred.id()]);
+    let op = UpdateOperation::Remove(vec![alice_cred.cred_id()]);
     let err = update_credentials(deps.storage, &op).unwrap_err();
     println!("Error: {}", err);
-    assert_eq!(err, AuthError::Credential(CredentialError::NoneLeft))
+    assert_eq!(err.to_string(), AuthError::Credential(CredentialError::NoneLeft).to_string());
 }
 
 

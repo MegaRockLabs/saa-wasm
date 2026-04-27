@@ -22,7 +22,7 @@ saa-schema              = { workspace = true }
 types                   = { workspace = true }
 
 [features]
-default      =   ["cosmwasm_v1", "session"]
+default      =   ["cosmwasm", "session"]
 cosmwasm_v1  =   ["types/cosmwasm_v1"]
 cosmwasm     =   ["types/cosmwasm"]
 session      =   ["types/session"]

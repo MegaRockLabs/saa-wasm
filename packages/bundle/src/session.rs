@@ -23,7 +23,7 @@ fn validate_common(
     msgs    : &MsgArg<impl DerivableMsg>
 ) -> Result<(), AuthError> {
     let (id, info) = session.grantee.clone();
-    ensure!(id == cred.id(), SessionError::NotGrantee);
+    ensure!(id == cred.cred_id(), SessionError::NotGrantee);
     let cred_info = cred.verify(deps)?;
     ensure!(info == cred_info, SessionError::InvalidGrantee);
     #[cfg(not(feature = "multi"))]
@@ -276,7 +276,7 @@ pub fn handle_session_query<M>(
         } => {
             let act = Action::new(&message, method.unwrap_or_default())
                 .map_err(|e| 
-                    StdError::generic_err(format!("Failed to derive message: {}", e)
+                    StdError::msg(format!("Failed to derive message: {}", e)
                 ))?;
 
             to_json_binary(&act.result)

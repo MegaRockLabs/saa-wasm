@@ -1,3 +1,4 @@
+use cw_schema::Schemaifier;
 use saa_schema::saa_type;
 use saa_schema::strum::{IntoDiscriminant, VariantNames, VariantArray};
 use saa_schema::strum_macros::{Display, EnumString, EnumDiscriminants};
@@ -17,7 +18,7 @@ use smart_account_auth::{SessionError, DerivableMsg};
 pub enum SessionQueryMsg<M> 
 where 
     M: QueryUsesActions,
-    M::ActionMsg: IntoDiscriminant,
+    M::ActionMsg: IntoDiscriminant + Schemaifier,
     <M::ActionMsg as IntoDiscriminant>::Discriminant: VariantArray + 'static,
 {
     #[returns(Vec<String>)]
@@ -39,11 +40,12 @@ where
 }
 
 
+
 pub trait QueryUsesActions
 where
     Self : DerivableMsg + VariantNames + IntoDiscriminant<Discriminant: VariantArray + 'static>,
     Self::ActionMsg :  DerivableMsg + saa_schema::schemars::JsonSchema +
-         VariantNames + IntoDiscriminant<Discriminant: VariantArray + 'static>,
+         VariantNames + IntoDiscriminant<Discriminant: VariantArray + 'static> + Schemaifier,
 {
     type ActionMsg;
 }
@@ -64,7 +66,6 @@ pub struct QueryResTemplate {
     pub data: Option<Binary>,
     pub error: Option<String>,
 }
-
 
 
 

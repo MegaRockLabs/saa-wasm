@@ -51,7 +51,6 @@ pub enum QueryMsg {
     #[returns(String)]
     REAllyLongAnnoyingQuery(String),
 
-
     #[returns(Option<String>)]
     StrumQuery {
         #[strum(to_string = "{{ \"get_balance\": {{ \"address\": \"{address}\" }} }}")]

@@ -5,7 +5,7 @@ edition     = { workspace = true }
 authors     = { workspace = true }
 license     = { workspace = true }
 repository  = { workspace = true }
-version     = "0.1.0-alpha.1"
+version     = { workspace = true }
 
 [lib]
 proc-macro = true

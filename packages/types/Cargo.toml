@@ -13,15 +13,16 @@ repository  = { workspace = true }
 [dependencies]
 smart-account-auth      = { workspace = true }
 saa-schema              = { workspace = true }
+cw-schema               = { version = "3.0.2" }
 protos                  = { workspace = true, optional = true }
 
-strum                   = { version = "0.27.1" }
-cosmwasm-schema         = { version = "1.5.11", default-features = false }
+strum                   = { version = "0.28.0" }
+cosmwasm-schema         = { version = "3.0.2", default-features = false }
 
 # Storage
-cw-storage-plus         = { version = "2.0.0", optional = true }
-cw-storage-plus-one     = { version = "1.2.0", optional = true, package = "cw-storage-plus" }
-thiserror               = { version = "2.0.12", default-features = false }
+cw-storage-plus         = { version = "3.0.1", optional = true }
+cw-storage-plus-one     = { version = "0.16.0", optional = true, package = "cw-storage-plus" }
+thiserror               = { version = "2.0.18", default-features = false }
 
 
 

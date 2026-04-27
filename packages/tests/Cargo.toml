@@ -9,8 +9,9 @@ repository  = { workspace = true }
 
 
 [dev-dependencies]
-cosmwasm-schema     = { version = "2.2.2" }
+cosmwasm-schema     = { version = "3.0.2" }
+cw-schema           = { version = "3.0.2" }
 saa-schema          = { workspace = true  }
 types               = { workspace = true  }
-smart-account-auth  = { workspace = true, features = ["passkeys", "cosmos_arb_addr", "eth_personal"] }
+smart-account-auth  = { workspace = true, features = ["cosmwasm", "passkeys", "cosmos_arb_addr", "eth_personal"] }
 saa-wasm            = { workspace = true,  features = ["cosmwasm", "utils"] }
